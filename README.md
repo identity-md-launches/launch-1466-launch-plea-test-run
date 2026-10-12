@@ -198,7 +198,7 @@ Then:
 
 3. **Open trading.** `PleaLaunch.seed()` creates the pool at a 5,700 IMD market cap and starts the Cabal. The owner may call it any time, and anyone may call it once `START` has passed.
 
-**Sepolia test run 3** (`launch.json` on this branch, `testnet3`; `testnet` is run 2's source, the `mainnet` branch has the mainnet draft, `main` keeps launch #1242):
+**Sepolia test run 4** (`launch.json` on this branch, `testnet4`; `testnet3` is run 3's source, `testnet` run 2's, the `mainnet` branch has the mainnet draft, `main` keeps launch #1242):
 
 | Setting | Value |
 |---|---|
