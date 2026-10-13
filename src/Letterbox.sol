@@ -285,17 +285,23 @@ contract Letterbox is ReentrancyGuardTransient {
     {
         if (originalId == 0) revert NothingToAppeal();
         _settleOpen(writer);
-        uint256 amount = gate.getPlea(originalId).amount;
+        uint256 originalAmount = gate.getPlea(originalId).amount;
+        uint256 amount = originalAmount;
         uint256 bal = plea.balanceOf(writer);
         // The original amount, or the gate's 50% of the balance when the fee sales left less.
         if (amount > bal * MAX_SHARE_BPS / BPS) amount = bal * MAX_SHARE_BPS / BPS;
-        // Never a larger share of the balance than the original plea had: the fee sale of a 20% letter
+        // Keep the original plea's share, subject to the gate's minimum: the fee sale of a 20% letter
         // shrinks the balance, and the same amount would otherwise fall into the next share band
         // (18 -> 11 points, need 33 -> 40). The gate allows a smaller appeal amount.
         uint256 origBal = gate.pleaBalance(originalId);
         if (origBal != 0) {
-            uint256 sameShare = FullMath.mulDiv(bal, gate.getPlea(originalId).amount, origBal);
+            uint256 sameShare = FullMath.mulDiv(bal, originalAmount, origBal);
             if (amount > sameShare) amount = sameShare;
+            // Match the gate's 1% minimum on the lesser balance, capped at MAX_SELL. The share
+            // floor can lose one wei at 1%, or fall below MAX_SELL for a capped minimum plea.
+            uint256 least = (bal < origBal ? bal : origBal) / 100;
+            if (least > MAX_SELL) least = MAX_SELL;
+            if (amount < least) amount = least;
         }
         _requireWorthTheFee(amount);
         (uint256 feeImd, uint256 maxFeePlea) = feesFor(true);

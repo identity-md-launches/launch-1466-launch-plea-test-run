@@ -652,8 +652,12 @@ contract PleaHook {
     /// sIMD vault, the PoolManager or this hook. Zero when nothing resolves.
     function _resolveTrader(address sender, bytes calldata hookData) internal view returns (address trader) {
         if (hookData.length == 32) {
-            trader = abi.decode(hookData, (address));
-            if (_validTrader(trader, sender)) return trader;
+            // A malformed address word must fall through, not revert or truncate into a trader.
+            uint256 hookWord = abi.decode(hookData, (uint256));
+            if (hookWord <= type(uint160).max) {
+                trader = address(uint160(hookWord));
+                if (_validTrader(trader, sender)) return trader;
+            }
         }
         if (sender.code.length == 0) return _validTrader(sender, sender) ? sender : address(0);
         (bool ok, bytes memory ret) = sender.staticcall{gas: MSG_SENDER_GAS}(abi.encodeWithSignature("msgSender()"));
